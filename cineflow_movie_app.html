@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e8b84b;
+    --accent2: #c4503a;
+    --text: #f0eff5;
+    --muted: #888799;
+    --red: #e74c3c;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* AUTH SCREEN */
+  #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0a0a0f 60%, #1a0e1f); }
+  .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem 2rem; width: 360px; text-align: center; }
+  .auth-logo { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 0.25rem; }
+  .auth-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .auth-tab { flex: 1; padding: 0.6rem; background: transparent; color: var(--muted); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; transition: all 0.2s; }
+  .auth-tab.active { background: var(--accent); color: #000; font-weight: 600; }
+  .auth-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 0.75rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; margin-bottom: 0.75rem; outline: none; transition: border 0.2s; }
+  .auth-input:focus { border-color: var(--accent); }
+  .auth-btn { width: 100%; background: var(--accent); color: #000; border: none; border-radius: var(--radius); padding: 0.8rem; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s; }
+  .auth-btn:hover { opacity: 0.85; }
+  .auth-err { color: var(--red); font-size: 0.8rem; margin-bottom: 0.75rem; min-height: 1em; }
+  .auth-users { margin-top: 1rem; text-align: left; }
+  .auth-users-title { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.5rem; }
+  .auth-user-chip { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 0.75rem; font-size: 0.78rem; margin: 0.2rem; cursor: pointer; transition: border-color 0.2s; }
+  .auth-user-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* MAIN APP */
+  #app { display: none; }
+  
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(10,10,15,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; padding: 0 1.5rem; height: 58px; }
+  .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 2px; color: var(--accent); text-decoration: none; flex-shrink: 0; cursor: pointer; }
+  .nav-search { flex: 1; display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0 0.75rem; gap: 0.5rem; max-width: 420px; }
+  .nav-search input { background: transparent; border: none; color: var(--text); padding: 0.5rem 0; width: 100%; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; }
+  .nav-search input::placeholder { color: var(--muted); }
+  .nav-search svg { color: var(--muted); flex-shrink: 0; width: 16px; height: 16px; }
+  .nav-tabs { display: flex; gap: 0.25rem; margin-left: auto; }
+  .nav-tab { background: transparent; border: none; color: var(--muted); padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; transition: all 0.2s; white-space: nowrap; }
+  .nav-tab.active, .nav-tab:hover { color: var(--text); background: var(--surface2); }
+  .nav-tab.active { color: var(--accent); }
+  .nav-user { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; position: relative; }
+  .nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+  .nav-username { font-size: 0.82rem; color: var(--muted); }
+  .nav-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 150px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none; }
+  .nav-dropdown.open { display: block; }
+  .nav-dd-item { padding: 0.65rem 1rem; font-size: 0.85rem; cursor: pointer; transition: background 0.15s; color: var(--text); }
+  .nav-dd-item:hover { background: var(--surface2); }
+  .nav-dd-item.danger { color: var(--red); }
+
+  /* HERO */
+  .hero { position: relative; height: 480px; overflow: hidden; }
+  .hero-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.45); display: block; }
+  .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to right, rgba(10,10,15,0.95) 35%, transparent 75%), linear-gradient(to top, rgba(10,10,15,0.8) 0%, transparent 50%); }
+  .hero-content { position: absolute; bottom: 2.5rem; left: 2rem; max-width: 480px; }
+  .hero-badge { display: inline-block; background: var(--accent); color: #000; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 0.75rem; }
+  .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; line-height: 1; letter-spacing: 1px; margin-bottom: 0.75rem; }
+  .hero-meta { display: flex; gap: 1rem; color: var(--muted); font-size: 0.82rem; margin-bottom: 0.75rem; align-items: center; }
+  .hero-rating { color: var(--accent); font-weight: 600; }
+  .hero-overview { color: #b0afc0; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.25rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .hero-btns { display: flex; gap: 0.75rem; }
+  .btn-play { background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 0.6rem 1.25rem; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s; }
+  .btn-play:hover { opacity: 0.85; }
+  .btn-info { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 0.6rem 1.25rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; cursor: pointer; backdrop-filter: blur(4px); transition: background 0.2s; }
+  .btn-info:hover { background: rgba(255,255,255,0.18); }
+
+  /* SECTIONS */
+  .section { padding: 1.5rem 1.5rem 0; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; }
+  .section-more { background: transparent; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer; }
+  .section-more:hover { color: var(--accent); }
+  .movies-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+
+  /* MOVIE CARD */
+  .movie-card { background: var(--surface); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+  .movie-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+  .movie-card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: var(--surface2); }
+  .movie-card-body { padding: 0.6rem; }
+  .movie-card-title { font-size: 0.8rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.25rem; }
+  .movie-card-meta { font-size: 0.72rem; color: var(--muted); display: flex; justify-content: space-between; }
+  .movie-card-rating { color: var(--accent); }
+  .movie-card-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.75); color: var(--accent); font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 2rem 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 16px; width: 100%; max-width: 780px; overflow: hidden; position: relative; animation: modalIn 0.25s ease; }
+  @keyframes modalIn { from { transform: scale(0.95) translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal-close { position: absolute; top: 12px; right: 14px; background: rgba(0,0,0,0.6); border: none; color: var(--text); width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
+  .modal-trailer { width: 100%; aspect-ratio: 16/9; background: #000; }
+  .modal-trailer iframe { width: 100%; height: 100%; border: none; display: block; }
+  .modal-trailer-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.85rem; gap: 0.5rem; cursor: pointer; transition: color 0.2s; }
+  .modal-trailer-placeholder:hover { color: var(--accent); }
+  .modal-body { padding: 1.5rem; }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 1px; margin-bottom: 0.5rem; }
+  .modal-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; color: var(--muted); font-size: 0.82rem; margin-bottom: 1rem; align-items: center; }
+  .modal-rating { color: var(--accent); font-weight: 600; font-size: 0.9rem; }
+  .modal-genre { background: var(--surface2); border-radius: 4px; padding: 2px 8px; font-size: 0.72rem; }
+  .modal-overview { color: #b0afc0; font-size: 0.88rem; line-height: 1.7; margin-bottom: 1.25rem; }
+  .modal-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn-watchlist { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+  .btn-watchlist:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-watchlist.added { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .btn-watched { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+  .btn-watched.marked { background: #1a3a1a; color: #4caf50; border-color: #4caf50; }
+  .modal-last-watched { font-size: 0.78rem; color: var(--muted); margin-top: 0.75rem; }
+
+  /* PROFILE/HISTORY PAGE */
+  #profile-page { padding: 2rem 1.5rem; }
+  .profile-header { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 2rem; }
+  .profile-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.5rem; }
+  .profile-name { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 1px; }
+  .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--accent); }
+  .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+  .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem; }
+  .history-item { background: var(--surface); border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; }
+  .history-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
+  .history-item-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 60%, transparent); padding: 0.5rem; }
+  .history-item-title { font-size: 0.7rem; font-weight: 500; line-height: 1.3; }
+  .history-item-date { font-size: 0.62rem; color: var(--muted); }
+
+  /* SEARCH RESULTS */
+  #search-page { padding: 1.5rem; }
+  .search-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; margin-bottom: 1rem; }
+  .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 1.25rem; font-size: 0.85rem; z-index: 500; transition: transform 0.3s ease; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* GENRES */
+  .genre-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .genre-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 20px; padding: 0.3rem 0.85rem; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .genre-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  
+  /* WATCHLIST */
+  #watchlist-page { padding: 1.5rem; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-text { font-size: 0.9rem; }
+
+  /* SPINNER */
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 3rem auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .no-poster { width: 100%; aspect-ratio: 2/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.75rem; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">CineFlow</div>
+    <div class="auth-sub">Your personal movie universe</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+    <div id="auth-err" class="auth-err"></div>
+    <input class="auth-input" id="auth-username" type="text" placeholder="Username" autocomplete="off">
+    <input class="auth-input" id="auth-password" type="password" placeholder="Password">
+    <button class="auth-btn" id="auth-submit" onclick="handleAuth()">Sign In</button>
+    <div class="auth-users" id="saved-users-wrap" style="display:none">
+      <div class="auth-users-title">QUICK SELECT</div>
+      <div id="saved-users"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <nav>
+    <span class="nav-logo" onclick="goHome()">CINEFLOW</span>
+    <div class="nav-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search-input" type="text" placeholder="Search movies..." oninput="onSearchInput(this.value)">
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-home" onclick="showPage('home')">Home</button>
+      <button class="nav-tab" id="tab-movies" onclick="showPage('movies')">Movies</button>
+      <button class="nav-tab" id="tab-series" onclick="showPage('series')">Series</button>
+      <button class="nav-tab" id="tab-watchlist" onclick="showPage('watchlist')">Watchlist</button>
+      <button class="nav-tab" id="tab-profile" onclick="showPage('profile')">History</button>
+    </div>
+    <div class="nav-user" onclick="toggleDropdown()">
+      <div class="nav-avatar" id="nav-avatar"></div>
+      <span class="nav-username" id="nav-username"></span>
+      <div class="nav-dropdown" id="nav-dropdown">
+        <div class="nav-dd-item" onclick="showPage('profile')">My Profile</div>
+        <div class="nav-dd-item" onclick="showPage('watchlist')">Watchlist</div>
+        <div class="nav-dd-item danger" onclick="logout()">Sign Out</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HOME PAGE -->
+  <div id="home-page" class="page active">
+    <div class="hero" id="hero-section">
+      <div class="spinner"></div>
+    </div>
+    <div class="section" style="margin-top:1.5rem">
+      <div class="section-header"><span class="section-title">Browse by Genre</span></div>
+      <div class="genre-filters" id="genre-filters"></div>
+    </div>
+    <div class="section" id="continue-watching-section">
+  <div class="section-header"><span class="section-title">Continue Watching</span></div>
+  <div class="movies-row" id="continue-watching-row"></div>
+</div>
+
+<div class="section" id="from-watchlist-section">
+  <div class="section-header"><span class="section-title">From Your Watchlist</span></div>
+  <div class="movies-row" id="from-watchlist-row"></div>
+</div>
+    <div class="section">
+      <div class="section-header"><span class="section-title" id="trending-label">Trending Now</span></div>
+      <div class="movies-row" id="trending-row"><div class="spinner"></div></div>
+    </div>
+    <div class="section" style="padding-bottom:2rem">
+      <div class="section-header"><span class="section-title">Top Rated</span></div>
+      <div class="movies-row" id="toprated-row"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- WATCHLIST PAGE -->
+  <div id="watchlist-page" class="page">
+    <div style="padding:1.5rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;margin-bottom:1rem">My Watchlist</div>
+      <div class="movies-row" id="watchlist-grid"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="profile-page" class="page">
+    <div class="profile-header">
+  <div class="profile-avatar" id="profile-avatar"></div>
+  <div>
+    <div class="profile-name" id="profile-name"></div>
+    <div style="font-size:0.8rem;color:var(--muted)">Member</div>
+    <button id="trakt-btn" onclick="traktConnect()" style="margin-top:0.5rem;background:#ed1c24;color:#fff;border:none;border-radius:6px;padding:0.4rem 1rem;font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">
+      Connect Trakt
+    </button>
+    <span id="trakt-status" style="font-size:0.75rem;color:var(--muted);margin-left:0.5rem;"></span>
+  </div>
+  <button onclick="openEditProfile()" style="margin-left:auto;align-self:flex-start;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.9rem;font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✎ Edit</button>
+</div>
+    <div class="profile-stats">
+      <div class="stat-card"><div class="stat-num" id="stat-watched">0</div><div class="stat-label">WATCHED</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-watchlist">0</div><div class="stat-label">WATCHLIST</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-genres">0</div><div class="stat-label">GENRES</div></div>
+    </div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;margin-bottom:0.75rem">Watch History</div>
+    <div class="history-grid" id="history-grid"></div>
+  </div>
+
+  <!-- MOVIES PAGE -->
+  <div id="movies-page" class="page">
+    <div style="padding:1.5rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;margin-bottom:1rem">Movies</div>
+      <div class="genre-filters" id="movies-genre-filters"></div>
+      <div class="movies-row" id="movies-grid"><div class="spinner"></div></div>
+      <button id="movies-load-more" onclick="loadMoreMovies()" style="display:block;margin:1.5rem auto;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:0.6rem 2rem;font-family:'DM Sans',sans-serif;cursor:pointer;">Load More</button>
+    </div>
+  </div>
+
+  <!-- SERIES PAGE -->
+  <div id="series-page" class="page">
+    <div style="padding:1.5rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;margin-bottom:1rem">Series</div>
+      <div class="genre-filters" id="series-genre-filters"></div>
+      <div class="movies-row" id="series-grid"><div class="spinner"></div></div>
+      <button id="series-load-more" onclick="loadMoreSeries()" style="display:block;margin:1.5rem auto;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:0.6rem 2rem;font-family:'DM Sans',sans-serif;cursor:pointer;">Load More</button>
+    </div>
+  </div>
+
+  <!-- SEARCH PAGE -->
+  <div id="search-page" class="page">
+    <div class="search-title" id="search-heading">Search Results</div>
+    <div class="search-grid" id="search-results"></div>
+  </div>
+
+</div>
+
+<!-- MOVIE MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-trailer" id="modal-trailer"></div>
+    <div class="modal-body">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <div class="modal-overview" id="modal-overview"></div>
+      <div class="modal-actions">
+        <button class="btn-play" onclick="playTrailer()">▶ Play Trailer</button>
+        <button class="btn-watch" id="modal-watch-btn" onclick="watchMovie()" style="background:#c4503a;color:#fff;border:none;border-radius:8px;padding:0.6rem 1.25rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">🎬 Watch Now</button>
+        <button class="btn-watchlist" id="modal-wl-btn" onclick="toggleWatchlist()">+ Watchlist</button>
+        <button class="btn-watched" id="modal-wd-btn" onclick="markWatched()">✓ Mark Watched</button>
+      </div>
+      <div class="modal-last-watched" id="modal-last-watched"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const TMDB_KEY = '8265bd1679663a7ea12ac168da84d2e8';
+const TRAKT_CLIENT_ID = '7f963fbc52234c41cba74d20585e2d89e36b075d308381972ccaad50b40087e0';
+const NEXSTREAM_KEY = 'nx_812875f3efcf98d1a5a78d2d662e5351';
+const TMDB = 'https://api.themoviedb.org/3';
+const IMG = 'https://image.tmdb.org/t/p/';
+const YT_EMBED = 'https://www.youtube.com/embed/';
+
+let currentUser = null;
+let currentMovie = null;
+let currentTrailerKey = null;
+let searchTimeout = null;
+let authMode = 'login';
+
+// ── USER STORAGE ──
+function getUsers() { try { return JSON.parse(localStorage.getItem('cf_users') || '{}'); } catch { return {}; } }
+function saveUsers(u) { localStorage.setItem('cf_users', JSON.stringify(u)); }
+function getUserData(username) {
+  const users = getUsers();
+  return users[username] || { password: '', watchlist: [], history: [], genres: [] };
+}
+function saveUserData(username, data) {
+  const users = getUsers();
+  users[username] = data;
+  saveUsers(users);
+}
+function getUsernames() { return Object.keys(getUsers()); }
+
+// ── AUTH ──
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (mode==='login'&&i===0)||(mode==='register'&&i===1)));
+  document.getElementById('auth-submit').textContent = mode === 'login' ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-err').textContent = '';
+}
+
+function renderSavedUsers() {
+  const names = getUsernames();
+  const wrap = document.getElementById('saved-users-wrap');
+  const el = document.getElementById('saved-users');
+  if (!names.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  el.innerHTML = names.map(n => `<span class="auth-user-chip" onclick="quickLogin('${n}')">${n}</span>`).join('');
+}
+
+function quickLogin(name) {
+  document.getElementById('auth-username').value = name;
+  document.getElementById('auth-password').focus();
+}
+
+function handleAuth() {
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const err = document.getElementById('auth-err');
+  if (!username || !password) { err.textContent = 'Please fill all fields.'; return; }
+  const users = getUsers();
+  if (authMode === 'register') {
+    if (users[username]) { err.textContent = 'Username already taken.'; return; }
+    users[username] = { password, watchlist: [], history: [], genres: [] };
+    saveUsers(users);
+    loginUser(username);
+  } else {
+    if (!users[username]) { err.textContent = 'User not found.'; return; }
+    if (users[username].password !== password) { err.textContent = 'Wrong password.'; return; }
+    loginUser(username);
+  }
+}
+
+function loginUser(username) {
+  currentUser = username;
+  localStorage.setItem('cf_session', username);
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const initial = username[0].toUpperCase();
+  document.getElementById('nav-avatar').textContent = initial;
+  document.getElementById('nav-username').textContent = username;
+  document.getElementById('profile-avatar').textContent = initial;
+  document.getElementById('profile-name').textContent = username;
+  updateNavAvatar();
+  loadApp();
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('cf_session');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-username').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-err').textContent = '';
+  renderSavedUsers();
+}
+
+function toggleDropdown() {
+  document.getElementById('nav-dropdown').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.nav-user')) document.getElementById('nav-dropdown').classList.remove('open');
+});
+
+// ── TMDB ──
+async function tmdb(path, params = {}) {
+  const url = new URL(TMDB + path);
+  url.searchParams.set('api_key', TMDB_KEY);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const r = await fetch(url);
+  return r.json();
+}
+
+// ── APP LOAD ──
+async function loadApp() {
+  loadHero();
+  loadContinueWatching();
+  loadFromWatchlist();
+  loadTrending();
+  loadTopRated();
+  loadGenres();
+}
+
+async function loadHero() {
+  try {
+    const data = await tmdb('/trending/movie/week');
+    const movies = data.results.filter(m => m.backdrop_path);
+    const m = movies[Math.floor(Math.random() * Math.min(5, movies.length))];
+    const hero = document.getElementById('hero-section');
+    hero.innerHTML = `
+      <img class="hero-img" src="${IMG}w1280${m.backdrop_path}" alt="${m.title}" loading="lazy">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <span class="hero-badge">TRENDING</span>
+        <div class="hero-title">${m.title}</div>
+        <div class="hero-meta">
+          <span class="hero-rating">★ ${m.vote_average.toFixed(1)}</span>
+          <span>${m.release_date?.split('-')[0] || ''}</span>
+        </div>
+        <div class="hero-overview">${m.overview}</div>
+        <div class="hero-btns">
+          <button class="btn-play" onclick="openModal(${JSON.stringify(m).replace(/"/g,'&quot;')})">▶ Watch Trailer</button>
+          <button class="btn-info" onclick="openModal(${JSON.stringify(m).replace(/"/g,'&quot;')})">More Info</button>
+        </div>
+      </div>`;
+  } catch(e) { console.error(e); }
+}
+
+async function loadTrending(genreId = null) {
+  const row = document.getElementById('trending-row');
+  row.innerHTML = '<div class="spinner"></div>';
+  try {
+    let data;
+    if (genreId) {
+      data = await tmdb('/discover/movie', { sort_by: 'popularity.desc', with_genres: genreId });
+    } else {
+      data = await tmdb('/trending/movie/week');
+    }
+    row.innerHTML = data.results.slice(0,12).map(m => movieCard(m)).join('');
+  } catch(e) { row.innerHTML = '<div style="color:var(--muted);padding:1rem">Failed to load.</div>'; }
+}
+
+async function loadTopRated() {
+  const row = document.getElementById('toprated-row');
+  row.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await tmdb('/movie/top_rated');
+    row.innerHTML = data.results.slice(0,12).map(m => movieCard(m)).join('');
+  } catch(e) { row.innerHTML = ''; }
+}
+
+async function loadGenres() {
+  try {
+    const data = await tmdb('/genre/movie/list');
+    const wrap = document.getElementById('genre-filters');
+    wrap.innerHTML = `<button class="genre-btn active" onclick="filterGenre(null, this)">All</button>` +
+      data.genres.slice(0,12).map(g => `<button class="genre-btn" onclick="filterGenre(${g.id}, this)">${g.name}</button>`).join('');
+  } catch(e) {}
+}
+
+function filterGenre(genreId, btn) {
+  document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const label = document.getElementById('trending-label');
+  label.textContent = genreId ? btn.textContent : 'Trending Now';
+  loadTrending(genreId);
+}
+
+function movieCard(m) {
+  const poster = m.poster_path ? `<img class="movie-card-img" src="${IMG}w342${m.poster_path}" alt="${m.title}" loading="lazy">` : `<div class="no-poster">No Image</div>`;
+  const rating = m.vote_average ? m.vote_average.toFixed(1) : 'N/A';
+  const year = m.release_date?.split('-')[0] || '';
+  const escaped = JSON.stringify(m).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return `<div class="movie-card" onclick="openModal(${escaped})">
+    ${poster}
+    <div class="movie-card-badge">★ ${rating}</div>
+    <div class="movie-card-body">
+      <div class="movie-card-title">${m.title}</div>
+      <div class="movie-card-meta"><span>${year}</span></div>
+    </div>
+  </div>`;
+}
+
+// ── MODAL ──
+async function openModal(movie) {
+  currentMovie = movie;
+  currentTrailerKey = null;
+  document.getElementById('modal-title').textContent = movie.title;
+  document.getElementById('modal-overview').textContent = movie.overview;
+  document.getElementById('modal-trailer').innerHTML = `<div class="modal-trailer-placeholder" onclick="playTrailer()">▶ Click to load trailer</div>`;
+  
+  const year = movie.release_date?.split('-')[0] || '';
+  const rating = movie.vote_average ? `★ ${movie.vote_average.toFixed(1)}` : '';
+  document.getElementById('modal-meta').innerHTML = `
+    <span class="modal-rating">${rating}</span>
+    <span>${year}</span>
+    ${movie.adult ? '<span class="modal-genre">18+</span>' : ''}
+    <span style="color:var(--muted)">${movie.original_language?.toUpperCase() || ''}</span>
+  `;
+  
+  updateModalButtons();
+  
+  const lw = getLastWatched(movie.id);
+  document.getElementById('modal-last-watched').textContent = lw ? `Last watched: ${lw}` : '';
+  
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  
+  // Fetch trailer in background
+  try {
+    const data = await tmdb(`/movie/${movie.id}/videos`);
+   const trailers = data.results.filter(v => v.site === 'YouTube');
+const trailer = trailers.find(v => v.type === 'Trailer' && !v.official === false)
+             || trailers.find(v => v.type === 'Trailer')
+             || trailers.find(v => v.type === 'Teaser')
+             || trailers[0];
+// store all keys for fallback
+window._allTrailerKeys = trailers.map(v => v.key);
+    if (trailer) {
+      currentTrailerKey = trailer.key;
+      document.getElementById('modal-trailer').innerHTML = `<div class="modal-trailer-placeholder" onclick="playTrailer()">▶ Play Trailer — ${movie.title}</div>`;
+    } else {
+      document.getElementById('modal-trailer').innerHTML = `<div class="modal-trailer-placeholder" style="cursor:default;color:var(--muted)">No trailer available</div>`;
+    }
+  } catch(e) {}
+}
+
+function watchMovie() {
+  if (!currentMovie) return;
+  const type = currentMovie.media_type === 'tv' ? 'tv' : 'movie';
+  const src = `https://api.codespecters.com/embed/${type}/${currentMovie.id}?apikey=${NEXSTREAM_KEY}`;
+  document.getElementById('modal-trailer').innerHTML = `<iframe src="${src}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen" style="display:block;"></iframe>`;
+  recordHistory(currentMovie);
+  traktScrobble(currentMovie);
+  // init progress if not exists
+  const d = getUserDataCurrent();
+  if (!d.progress) d.progress = {};
+  saveCurrentData(d);
+  // increment progress every 30 seconds
+  clearInterval(window._progressInterval);
+  window._progressInterval = setInterval(() => {
+    try {
+      const iframe = document.querySelector('#modal-trailer iframe');
+      if (!iframe) { clearInterval(window._progressInterval); return; }
+      const d = getUserDataCurrent();
+      if (!d.progress) d.progress = {};
+      d.progress[currentMovie.id] = Math.min((d.progress[currentMovie.id] || 0) + 5, 95);
+      saveCurrentData(d);
+      loadContinueWatching();
+    } catch(e) { clearInterval(window._progressInterval); }
+  }, 30000);
+}
+function playTrailer() {
+  if (!currentTrailerKey) return;
+  const container = document.getElementById('modal-trailer');
+  container.innerHTML = `<iframe 
+    src="${YT_EMBED}${currentTrailerKey}?autoplay=1&origin=${location.origin}" 
+    allowfullscreen allow="autoplay"
+    id="trailer-iframe"
+    style="width:100%;height:100%;border:none;display:block;">
+  </iframe>`;
+  // detect embed block and fall back to opening YouTube
+  const iframe = document.getElementById('trailer-iframe');
+  iframe.onerror = () => openYouTubeFallback();
+setTimeout(() => {
+  try {
+    if (!iframe.contentWindow?.location?.href) tryNextTrailer();
+  } catch { /* loaded fine */ }
+}, 3000);
+  if (currentMovie) recordHistory(currentMovie);
+}
+function tryNextTrailer() {
+  const keys = window._allTrailerKeys || [];
+  const idx = keys.indexOf(currentTrailerKey);
+  if (idx !== -1 && idx + 1 < keys.length) {
+    currentTrailerKey = keys[idx + 1];
+    playTrailer(); // try next one
+  } else {
+    openYouTubeFallback(); // nothing left, open YouTube
+  }
+}
+function openYouTubeFallback() {
+  const container = document.getElementById('modal-trailer');
+  container.innerHTML = `
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:#000;">
+      <div style="color:#888;font-size:0.85rem;">Embedding blocked by YouTube</div>
+      <a href="https://www.youtube.com/watch?v=${currentTrailerKey}" target="_blank"
+        style="background:#ed1c24;color:#fff;padding:0.6rem 1.4rem;border-radius:8px;text-decoration:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.9rem;">
+        ▶ Watch on YouTube
+      </a>
+    </div>`;
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-trailer').innerHTML = '';
+  document.body.style.overflow = '';
+  clearInterval(window._progressInterval);
+  loadContinueWatching();
+  loadFromWatchlist();
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+// ── WATCHLIST & HISTORY ──
+function getUserDataCurrent() { return getUserData(currentUser); }
+function saveCurrentData(d) { saveUserData(currentUser, d); }
+
+function toggleWatchlist() {
+  if (!currentMovie || !currentUser) return;
+  const d = getUserDataCurrent();
+  const idx = d.watchlist.findIndex(m => m.id === currentMovie.id);
+  if (idx > -1) {
+     d.watchlist.splice(idx, 1);
+    traktRemoveFromWatchlist(currentMovie);
+     showToast('Removed from Watchlist'); 
+    } else { d.watchlist.push({ id: currentMovie.id, title: currentMovie.title, poster_path: currentMovie.poster_path, vote_average: currentMovie.vote_average, release_date: currentMovie.release_date });
+    traktAddToWatchlist(currentMovie);
+     showToast('Added to Watchlist ✓'); }
+  saveCurrentData(d);
+  updateModalButtons();
+}
+
+function markWatched() {
+  if (!currentMovie || !currentUser) return;
+  const d = getUserDataCurrent();
+  const inH = d.history.some(m => m.id === currentMovie.id);
+  if (inH) {
+    d.history = d.history.filter(m => m.id !== currentMovie.id);
+    if (d.progress) delete d.progress[currentMovie.id];
+    saveCurrentData(d);
+    showToast('Removed from Watch History');
+  } else {
+    recordHistory(currentMovie);
+    traktScrobble(currentMovie);
+    showToast('Marked as Watched ✓');
+  }
+  const lw = getLastWatched(currentMovie.id);
+  document.getElementById('modal-last-watched').textContent = lw ? `Last watched: ${lw}` : '';
+  updateModalButtons();
+  loadContinueWatching();
+}
+
+function recordHistory(movie) {
+  const d = getUserDataCurrent();
+  d.history = d.history.filter(h => h.id !== movie.id);
+  d.history.unshift({ id: movie.id, title: movie.title, poster_path: movie.poster_path, watchedAt: new Date().toLocaleDateString() });
+  if (d.history.length > 100) d.history = d.history.slice(0,100);
+  saveCurrentData(d);
+}
+
+function getLastWatched(movieId) {
+  const d = getUserDataCurrent();
+  const h = d.history.find(m => m.id === movieId);
+  return h ? h.watchedAt : null;
+}
+
+function updateModalButtons() {
+  if (!currentMovie || !currentUser) return;
+  const d = getUserDataCurrent();
+  const inWL = d.watchlist.some(m => m.id === currentMovie.id);
+  const inH = d.history.some(m => m.id === currentMovie.id);
+  const wlBtn = document.getElementById('modal-wl-btn');
+  const wdBtn = document.getElementById('modal-wd-btn');
+  wlBtn.textContent = inWL ? '✓ In Watchlist' : '+ Watchlist';
+  wlBtn.classList.toggle('added', inWL);
+  wdBtn.classList.toggle('marked', inH);
+  wdBtn.textContent = inH ? '✕ Unwatch' : '✓ Mark Watched';
+}
+
+// ── PAGES ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(name + '-page').classList.add('active');
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
+  document.getElementById('search-input').value = '';
+  if (name === 'movies' && moviesPage === 1) { loadMoviesPage(); loadMoviesGenres(); }
+  if (name === 'series' && seriesPage === 1) { loadSeriesPage(); loadSeriesGenres(); }
+  if (name === 'watchlist') renderWatchlist();
+  if (name === 'profile') renderProfile();
+  document.getElementById('nav-dropdown').classList.remove('open');
+}
+
+function goHome() { showPage('home'); }
+
+function renderWatchlist() {
+  const d = getUserDataCurrent();
+  const grid = document.getElementById('watchlist-grid');
+  if (!d.watchlist.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎬</div><div class="empty-text">Your watchlist is empty.<br>Add movies from the home page.</div></div>`;
+    return;
+  }
+  grid.innerHTML = d.watchlist.map(m => movieCard(m)).join('');
+}
+
+function renderProfile() {
+  updateTraktButton();
+  updateNavAvatar();
+  const d = getUserDataCurrent();
+  document.getElementById('stat-watched').textContent = d.history.length;
+  document.getElementById('stat-watchlist').textContent = d.watchlist.length;
+  const genres = new Set();
+  d.history.forEach(() => genres.add('g'));
+  document.getElementById('stat-genres').textContent = Math.min(d.history.length, 8);
+  
+  const grid = document.getElementById('history-grid');
+  if (!d.history.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text">No watch history yet.</div></div>`;
+    return;
+  }
+  grid.innerHTML = d.history.slice(0,30).map(m => {
+    const img = m.poster_path ? `<img src="${IMG}w185${m.poster_path}" alt="${m.title}" loading="lazy">` : `<div style="width:100%;aspect-ratio:2/3;background:var(--surface2)"></div>`;
+    const escaped = JSON.stringify(m).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return `<div class="history-item" onclick="openModal(${escaped})">
+      ${img}
+      <div class="history-item-overlay">
+        <div class="history-item-title">${m.title}</div>
+        <div class="history-item-date">${m.watchedAt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── SEARCH ──
+function onSearchInput(val) {
+  clearTimeout(searchTimeout);
+  if (!val.trim()) { showPage('home'); return; }
+  searchTimeout = setTimeout(() => doSearch(val), 400);
+}
+
+async function doSearch(query) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('search-page').classList.add('active');
+  document.getElementById('search-heading').textContent = `Results for "${query}"`;
+  const grid = document.getElementById('search-results');
+  grid.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await tmdb('/search/movie', { query });
+    if (!data.results.length) { grid.innerHTML = '<div style="color:var(--muted);padding:1rem">No results found.</div>'; return; }
+    grid.innerHTML = data.results.slice(0,20).map(m => movieCard(m)).join('');
+  } catch(e) { grid.innerHTML = '<div style="color:var(--muted)">Search failed.</div>'; }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+// ── PROFILE EDIT ──
+let epAvatarData = null;
+
+function openEditProfile() {
+  const d = getUserDataCurrent();
+  document.getElementById('ep-username').value = currentUser;
+  document.getElementById('ep-password').value = '';
+  document.getElementById('ep-err').textContent = '';
+  epAvatarData = d.avatar || null;
+  const prev = document.getElementById('ep-avatar-preview');
+  if (d.avatar) { prev.innerHTML = `<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;">`; }
+  else { prev.textContent = currentUser[0].toUpperCase(); prev.style.background = '#e8b84b'; }
+  document.getElementById('edit-profile-modal').style.display = 'flex';
+}
+
+function closeEditProfile() {
+  document.getElementById('edit-profile-modal').style.display = 'none';
+}
+
+function previewAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    epAvatarData = e.target.result;
+    const prev = document.getElementById('ep-avatar-preview');
+    prev.innerHTML = `<img src="${epAvatarData}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveEditProfile() {
+  const newUsername = document.getElementById('ep-username').value.trim();
+  const newPassword = document.getElementById('ep-password').value;
+  const errEl = document.getElementById('ep-err');
+  if (!newUsername) { errEl.textContent = 'Username cannot be empty.'; return; }
+  const users = getUsers();
+  if (newUsername !== currentUser && users[newUsername]) { errEl.textContent = 'That username is already taken.'; return; }
+  const d = getUserDataCurrent();
+  if (newPassword) d.password = newPassword;
+  if (epAvatarData) d.avatar = epAvatarData;
+  // rename user key if username changed
+  if (newUsername !== currentUser) {
+    users[newUsername] = { ...d };
+    delete users[currentUser];
+    saveUsers(users);
+    currentUser = newUsername;
+    localStorage.setItem('cf_session', newUsername);
+  } else {
+    saveUserData(currentUser, d);
+  }
+  // update UI
+  const initial = currentUser[0].toUpperCase();
+  document.getElementById('nav-username').textContent = currentUser;
+  document.getElementById('profile-name').textContent = currentUser;
+  updateNavAvatar();
+  closeEditProfile();
+  showToast('Profile updated ✓');
+  renderProfile();
+}
+
+function updateNavAvatar() {
+  const d = getUserDataCurrent();
+  const navAv = document.getElementById('nav-avatar');
+  const profAv = document.getElementById('profile-avatar');
+  if (d.avatar) {
+    navAv.innerHTML = `<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    navAv.style.background = 'transparent';
+    profAv.innerHTML = `<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    profAv.style.background = 'transparent';
+  } else {
+    const i = currentUser[0].toUpperCase();
+    navAv.textContent = i; navAv.style.background = '#e8b84b';
+    profAv.textContent = i; profAv.style.background = '#e8b84b';
+  }
+}
+
+// ── TRAKT ──
+const TRAKT_API = 'https://api.trakt.tv';
+const TRAKT_PIN_URL = `https://trakt.tv/oauth/applications/208973`;
+
+function getTraktToken() {
+  const d = getUserDataCurrent();
+  return d.traktToken || null;
+}
+
+function saveTraktToken(token) {
+  const d = getUserDataCurrent();
+  d.traktToken = token;
+  d.traktConnectedAt = new Date().toLocaleDateString();
+  saveCurrentData(d);
+}
+
+function traktConnect() {
+  window.open(TRAKT_PIN_URL, '_blank');
+  document.getElementById('trakt-modal').style.display = 'flex';
+  document.getElementById('trakt-pin-input').value = '';
+  document.getElementById('trakt-pin-err').textContent = '';
+}
+
+function closeTraktModal() {
+  document.getElementById('trakt-modal').style.display = 'none';
+}
+
+async function traktSubmitPin() {
+  const pin = document.getElementById('trakt-pin-input').value.trim();
+  const errEl = document.getElementById('trakt-pin-err');
+  if (!pin) { errEl.textContent = 'Please paste your PIN.'; return; }
+  errEl.textContent = 'Verifying...';
+  try {
+    const res = await fetch(`${TRAKT_API}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: pin,
+        client_id: TRAKT_CLIENT_ID,
+        client_secret: '',
+        redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+        grant_type: 'authorization_code'
+      })
+    });
+    if (!res.ok) { errEl.textContent = 'Invalid PIN. Try again.'; return; }
+    const data = await res.json();
+    saveTraktToken(data.access_token);
+    closeTraktModal();
+    updateTraktButton();
+    showToast('Trakt connected! Syncing history...');
+    await traktSyncAll();
+  } catch(e) {
+    errEl.textContent = 'Connection failed. Check internet.';
+  }
+}
+
+function updateTraktButton() {
+  const token = getTraktToken();
+  const btn = document.getElementById('trakt-btn');
+  const status = document.getElementById('trakt-status');
+  if (!btn) return;
+  if (token) {
+    btn.textContent = '✓ Trakt Connected';
+    btn.style.background = '#1a3a1a';
+    btn.style.color = '#4caf50';
+    btn.onclick = traktDisconnect;
+    const d = getUserDataCurrent();
+    status.textContent = d.traktConnectedAt ? `Since ${d.traktConnectedAt}` : '';
+  } else {
+    btn.textContent = 'Connect Trakt';
+    btn.style.background = '#ed1c24';
+    btn.style.color = '#fff';
+    btn.onclick = traktConnect;
+    status.textContent = '';
+  }
+}
+
+function traktDisconnect() {
+  const d = getUserDataCurrent();
+  delete d.traktToken;
+  delete d.traktConnectedAt;
+  saveCurrentData(d);
+  updateTraktButton();
+  showToast('Trakt disconnected.');
+}
+
+async function traktHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'trakt-api-version': '2',
+    'trakt-api-key': TRAKT_CLIENT_ID,
+    'Authorization': `Bearer ${getTraktToken()}`
+  };
+}
+
+async function traktSyncAll() {
+  await traktPullHistory();
+  await traktPullWatchlist();
+}
+
+async function fetchPoster(tmdbId) {
+  try {
+    const r = await fetch(`${TMDB}/movie/${tmdbId}?api_key=${TMDB_KEY}`);
+    const j = await r.json();
+    return j.poster_path || null;
+  } catch { return null; }
+}
+
+async function traktPullHistory() {
+  try {
+    const headers = await traktHeaders();
+    const res = await fetch(`${TRAKT_API}/sync/history/movies?limit=50`, { headers });
+    const data = await res.json();
+    const d = getUserDataCurrent();
+    const newItems = [];
+    for (const item of data) {
+      const m = item.movie;
+      if (!m?.ids?.tmdb) continue;
+      const exists = d.history.find(h => h.id === m.ids.tmdb);
+      if (!exists) newItems.push({ id: m.ids.tmdb, title: m.title, watchedAt: new Date(item.watched_at).toLocaleDateString() });
+    }
+    // fetch posters in batches of 5
+    for (let i = 0; i < newItems.length; i += 5) {
+      const batch = newItems.slice(i, i + 5);
+      await Promise.all(batch.map(async item => {
+        item.poster_path = await fetchPoster(item.id);
+        d.history.push(item);
+      }));
+      saveCurrentData(d);
+    }
+    if (newItems.length === 0) saveCurrentData(d);
+    showToast(`Synced ${data.length} movies from Trakt ✓`);
+  } catch(e) { console.error('Trakt history pull failed', e); }
+}
+
+async function traktPullWatchlist() {
+  try {
+    const headers = await traktHeaders();
+    const res = await fetch(`${TRAKT_API}/sync/watchlist/movies`, { headers });
+    const data = await res.json();
+    const d = getUserDataCurrent();
+    const newItems = [];
+    for (const item of data) {
+      const m = item.movie;
+      if (!m?.ids?.tmdb) continue;
+      const exists = d.watchlist.find(w => w.id === m.ids.tmdb);
+      if (!exists) newItems.push({ id: m.ids.tmdb, title: m.title });
+    }
+    for (let i = 0; i < newItems.length; i += 5) {
+      const batch = newItems.slice(i, i + 5);
+      await Promise.all(batch.map(async item => {
+        item.poster_path = await fetchPoster(item.id);
+        d.watchlist.push(item);
+      }));
+      saveCurrentData(d);
+    }
+    if (newItems.length === 0) saveCurrentData(d);
+  } catch(e) { console.error('Trakt watchlist pull failed', e); }
+}
+
+async function traktScrobble(movie) {
+  const token = getTraktToken();
+  if (!token) return;
+  try {
+    await fetch(`${TRAKT_API}/scrobble/stop`, {
+      method: 'POST',
+      headers: await traktHeaders(),
+      body: JSON.stringify({
+        movie: { title: movie.title, year: parseInt(movie.release_date?.split('-')[0]), ids: { tmdb: movie.id } },
+        progress: 100
+      })
+    });
+  } catch(e) { console.error('Trakt scrobble failed', e); }
+}
+
+async function traktAddToWatchlist(movie) {
+  const token = getTraktToken();
+  if (!token) return;
+  try {
+    await fetch(`${TRAKT_API}/sync/watchlist`, {
+      method: 'POST',
+      headers: await traktHeaders(),
+      body: JSON.stringify({
+        movies: [{ title: movie.title, year: parseInt(movie.release_date?.split('-')[0]), ids: { tmdb: movie.id } }]
+      })
+    });
+  } catch(e) { console.error('Trakt watchlist sync failed', e); }
+}
+
+async function traktRemoveFromWatchlist(movie) {
+  const token = getTraktToken();
+  if (!token) return;
+  try {
+    await fetch(`${TRAKT_API}/sync/watchlist/remove`, {
+      method: 'POST',
+      headers: await traktHeaders(),
+      body: JSON.stringify({
+        movies: [{ title: movie.title, ids: { tmdb: movie.id } }]
+      })
+    });
+  } catch(e) { console.error('Trakt remove watchlist failed', e); }
+}
+// ── MOVIES PAGE ──
+let moviesPage = 1;
+let moviesGenre = null;
+
+async function loadMoviesPage() {
+  const grid = document.getElementById('movies-grid');
+  if (moviesPage === 1) grid.innerHTML = '<div class="spinner"></div>';
+  try {
+    const params = { sort_by: 'popularity.desc', page: moviesPage };
+    if (moviesGenre) params.with_genres = moviesGenre;
+    const data = await tmdb('/discover/movie', params);
+    if (moviesPage === 1) grid.innerHTML = '';
+    grid.innerHTML += data.results.map(m => movieCard(m)).join('');
+  } catch(e) { grid.innerHTML = '<div style="color:var(--muted);padding:1rem">Failed to load.</div>'; }
+}
+
+function loadMoreMovies() {
+  moviesPage++;
+  loadMoviesPage();
+}
+
+async function loadMoviesGenres() {
+  try {
+    const data = await tmdb('/genre/movie/list');
+    const wrap = document.getElementById('movies-genre-filters');
+    wrap.innerHTML = `<button class="genre-btn active" onclick="filterMoviesGenre(null,this)">All</button>` +
+      data.genres.slice(0,12).map(g => `<button class="genre-btn" onclick="filterMoviesGenre(${g.id},this)">${g.name}</button>`).join('');
+  } catch(e) {}
+}
+
+function filterMoviesGenre(id, btn) {
+  document.querySelectorAll('#movies-genre-filters .genre-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  moviesGenre = id;
+  moviesPage = 1;
+  loadMoviesPage();
+}
+
+// ── SERIES PAGE ──
+let seriesPage = 1;
+let seriesGenre = null;
+
+async function loadSeriesPage() {
+  const grid = document.getElementById('series-grid');
+  if (seriesPage === 1) grid.innerHTML = '<div class="spinner"></div>';
+  try {
+    const params = { sort_by: 'popularity.desc', page: seriesPage };
+    if (seriesGenre) params.with_genres = seriesGenre;
+    const data = await tmdb('/discover/tv', params);
+    if (seriesPage === 1) grid.innerHTML = '';
+    grid.innerHTML += data.results.map(m => seriesCard(m)).join('');
+  } catch(e) { grid.innerHTML = '<div style="color:var(--muted);padding:1rem">Failed to load.</div>'; }
+}
+
+function loadMoreSeries() {
+  seriesPage++;
+  loadSeriesPage();
+}
+
+async function loadSeriesGenres() {
+  try {
+    const data = await tmdb('/genre/tv/list');
+    const wrap = document.getElementById('series-genre-filters');
+    wrap.innerHTML = `<button class="genre-btn active" onclick="filterSeriesGenre(null,this)">All</button>` +
+      data.genres.slice(0,12).map(g => `<button class="genre-btn" onclick="filterSeriesGenre(${g.id},this)">${g.name}</button>`).join('');
+  } catch(e) {}
+}
+
+function filterSeriesGenre(id, btn) {
+  document.querySelectorAll('#series-genre-filters .genre-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  seriesGenre = id;
+  seriesPage = 1;
+  loadSeriesPage();
+}
+
+function seriesCard(m) {
+  const title = m.name || m.title;
+  const poster = m.poster_path ? `<img class="movie-card-img" src="${IMG}w342${m.poster_path}" alt="${title}" loading="lazy">` : `<div class="no-poster">No Image</div>`;
+  const rating = m.vote_average ? m.vote_average.toFixed(1) : 'N/A';
+  const year = (m.first_air_date || m.release_date || '').split('-')[0];
+  const escaped = JSON.stringify({...m, title, media_type:'tv'}).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return `<div class="movie-card" onclick="openModal(${escaped})">
+    ${poster}
+    <div class="movie-card-badge">★ ${rating}</div>
+    <div class="movie-card-body">
+      <div class="movie-card-title">${title}</div>
+      <div class="movie-card-meta"><span>${year}</span><span style="color:var(--accent);font-size:0.68rem">TV</span></div>
+    </div>
+  </div>`;
+}
+// ── CONTINUE WATCHING & WATCHLIST ROW ──
+function loadContinueWatching() {
+  const section = document.getElementById('continue-watching-section');
+  const row = document.getElementById('continue-watching-row');
+  const d = getUserDataCurrent();
+  if (!d.history || !d.history.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  row.innerHTML = d.history.slice(0, 12).map(m => {
+    const progress = d.progress?.[m.id] || 0;
+    const poster = m.poster_path
+      ? `<img class="movie-card-img" src="${IMG}w342${m.poster_path}" alt="${m.title}" loading="lazy">`
+      : `<div class="no-poster">No Image</div>`;
+    const escaped = JSON.stringify(m).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return `<div class="movie-card" onclick="openModal(${escaped})">
+      ${poster}
+      <div style="height:3px;background:var(--surface2);border-radius:0 0 2px 2px;">
+        <div style="height:100%;width:${progress}%;background:var(--accent);border-radius:2px;transition:width 0.3s;"></div>
+      </div>
+      <div class="movie-card-body">
+        <div class="movie-card-title">${m.title}</div>
+        <div class="movie-card-meta"><span style="color:var(--muted)">${m.watchedAt || ''}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadFromWatchlist() {
+  const section = document.getElementById('from-watchlist-section');
+  const row = document.getElementById('from-watchlist-row');
+  const d = getUserDataCurrent();
+  if (!d.watchlist || !d.watchlist.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  row.innerHTML = d.watchlist.slice(0, 12).map(m => movieCard(m)).join('');
+}
+// ── INIT ──
+renderSavedUsers();
+const session = localStorage.getItem('cf_session');
+if (session && getUsers()[session]) { loginUser(session); }
+
+</script>
+<!-- EDIT PROFILE MODAL -->
+<div id="edit-profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:#13131a;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;width:340px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#e8b84b;margin-bottom:1.25rem;">Edit Profile</div>
+    <div style="text-align:center;margin-bottom:1.25rem;">
+      <div id="ep-avatar-preview" onclick="document.getElementById('ep-img-input').click()" style="width:80px;height:80px;border-radius:50%;background:#e8b84b;color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:2rem;margin:0 auto 0.5rem;cursor:pointer;overflow:hidden;border:2px solid rgba(255,255,255,0.1);"></div>
+      <div style="font-size:0.75rem;color:#888799;cursor:pointer;" onclick="document.getElementById('ep-img-input').click()">Click avatar to change photo</div>
+      <input type="file" id="ep-img-input" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+    </div>
+    <div style="font-size:0.78rem;color:#888799;margin-bottom:0.3rem;">Username</div>
+    <input id="ep-username" type="text" maxlength="20" style="width:100%;background:#1c1c28;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0eff5;padding:0.7rem 1rem;font-size:0.9rem;margin-bottom:1rem;outline:none;font-family:'DM Sans',sans-serif;">
+    <div style="font-size:0.78rem;color:#888799;margin-bottom:0.3rem;">New Password <span style="color:#555">(leave blank to keep current)</span></div>
+    <input id="ep-password" type="password" style="width:100%;background:#1c1c28;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0eff5;padding:0.7rem 1rem;font-size:0.9rem;margin-bottom:1rem;outline:none;font-family:'DM Sans',sans-serif;">
+    <div id="ep-err" style="color:#e74c3c;font-size:0.78rem;margin-bottom:0.75rem;min-height:1em;"></div>
+    <button onclick="saveEditProfile()" style="width:100%;background:#e8b84b;color:#000;border:none;border-radius:8px;padding:0.75rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;margin-bottom:0.5rem;">Save Changes</button>
+    <button onclick="closeEditProfile()" style="width:100%;background:transparent;color:#888799;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.6rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<!-- TRAKT PIN MODAL -->
+<div id="trakt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:#13131a;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;width:340px;text-align:center;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#e8b84b;margin-bottom:0.5rem;">Connect Trakt</div>
+    <p style="font-size:0.82rem;color:#888799;margin-bottom:1.25rem;line-height:1.6;">A Trakt page just opened. Approve the app there, then copy the PIN code and paste it below.</p>
+    <input id="trakt-pin-input" type="text" maxlength="8" placeholder="Paste PIN here" style="width:100%;background:#1c1c28;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f0eff5;padding:0.75rem 1rem;font-size:1rem;text-align:center;letter-spacing:4px;margin-bottom:0.75rem;outline:none;font-family:'DM Sans',sans-serif;">
+    <button onclick="traktSubmitPin()" style="width:100%;background:#ed1c24;color:#fff;border:none;border-radius:8px;padding:0.75rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;margin-bottom:0.5rem;">Verify PIN</button>
+    <button onclick="closeTraktModal()" style="width:100%;background:transparent;color:#888799;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.6rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">Cancel</button>
+    <div id="trakt-pin-err" style="color:#e74c3c;font-size:0.78rem;margin-top:0.5rem;min-height:1em;"></div>
+  </div>
+</div>
+</body>
+</html>
